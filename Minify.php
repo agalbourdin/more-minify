@@ -27,16 +27,6 @@ class Minify
     const MINIFY_DIR = 'minify';
 
     /**
-     * The minified CSS file extension.
-     */
-    const CSS_EXT = '.css';
-
-    /**
-     * The minified JS file extension.
-     */
-    const JS_EXT = '.js';
-
-    /**
      * The Minify constructor.
      * Chck if the Minify dir exists and is writable (required).
      */
@@ -75,7 +65,7 @@ class Minify
                . self::MINIFY_DIR
                . DS
                . $pFile
-               . self::CSS_EXT;
+               . \Agl\Core\Mvc\View\Type\Html::CSS_EXT;
     }
 
     /**
@@ -85,7 +75,9 @@ class Minify
      */
     private function _getAbsoluteCssFile($pFile)
     {
-        return $this->_getAbsoluteMinifyDir() . $pFile . self::CSS_EXT;
+        return $this->_getAbsoluteMinifyDir()
+               . $pFile
+               . \Agl\Core\Mvc\View\Type\Html::CSS_EXT;
     }
 
     /**
@@ -101,7 +93,7 @@ class Minify
                . self::MINIFY_DIR
                . DS
                . $pFile
-               . self::JS_EXT;
+               . \Agl\Core\Mvc\View\Type\Html::JS_EXT;
     }
 
     /**
@@ -111,7 +103,9 @@ class Minify
      */
     private function _getAbsoluteJsFile($pFile)
     {
-        return $this->_getAbsoluteMinifyDir() . $pFile . self::JS_EXT;
+        return $this->_getAbsoluteMinifyDir()
+               . $pFile
+               . \Agl\Core\Mvc\View\Type\Html::JS_EXT;
     }
 
     /**
@@ -129,10 +123,11 @@ class Minify
 
         if (! is_readable($this->_getAbsoluteCssFile($fileName))) {
             \Agl::loadModuleLib(__DIR__, self::CSS_LIB);
+            $compressor      = new \CSSmin();
             $minifiedContent = '';
 
             foreach($cssFiles as $css) {
-                if (! filter_var($css, FILTER_VALIDATE_URL, FILTER_FLAG_PATH_REQUIRED) and ! preg_match('/^\/\//', $css)) {
+                if (! filter_var($css, FILTER_VALIDATE_URL, FILTER_FLAG_PATH_REQUIRED) and ! preg_match('/^\/\//', $css) and strpos($css, \Agl\Core\Mvc\View\Type\Html::LESSCSS_EXT) === false) {
                     $minifiedContent .= "\n" . file_get_contents(
                         \Agl::app()->getPath()
                         . \Agl::APP_PUBLIC_DIR
@@ -149,17 +144,19 @@ class Minify
             }
 
             $minifiedContent = str_replace('url(../', 'url(' . \Agl::getSkinUrl(''), $minifiedContent);
-            $minifiedContent = \CssMin::minify($minifiedContent);
+            $minifiedContent = $compressor->run($minifiedContent);
             file_put_contents($this->_getAbsoluteCssFile($fileName), $minifiedContent);
         }
 
         foreach($cssFiles as $css) {
             if (filter_var($css, FILTER_VALIDATE_URL, FILTER_FLAG_PATH_REQUIRED) or preg_match('/^\/\//', $css)) {
-                $cssTags[] = '<link href="' . $css . '" rel="stylesheet" type="text/css" media="all">';
+                $cssTags[] = '<link href="' . $css . '" rel="stylesheet" type="text/css">';
+            } else if (strpos($css, \Agl\Core\Mvc\View\Type\Html::LESSCSS_EXT) !== false) {
+                $cssTags[] = '<link href="' . $css . '" rel="stylesheet/less" type="text/css">';
             }
         }
 
-        $cssTags[] = '<link href="' . $this->_getRelativeCssFile($fileName) . '" rel="stylesheet" type="text/css" media="all">';
+        $cssTags[] = '<link href="' . $this->_getRelativeCssFile($fileName) . '" rel="stylesheet" type="text/css">';
 
         return implode("\n", $cssTags);
     }
