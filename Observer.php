@@ -21,7 +21,7 @@ class Observer
     public static function minify(array $pObserver)
     {
         if (! \Agl::app()->isCacheEnabled()) {
-            //return false;
+            return false;
         }
 
         $view = $pObserver['view'];
