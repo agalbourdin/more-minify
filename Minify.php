@@ -119,7 +119,7 @@ class Minify
         $view->loadCss();
         $cssFiles = $view->cssToArray();
         $cssTags  = array();
-        $fileName = md5(implode($cssFiles));
+        $fileName = md5(\Agl::app()->getConfig('@app/global/theme') . implode($cssFiles));
 
         if (! is_readable($this->_getAbsoluteCssFile($fileName))) {
             \Agl::loadModuleLib(__DIR__, self::CSS_LIB);
@@ -143,7 +143,15 @@ class Minify
                 }
             }
 
-            $minifiedContent = str_replace('url(../', 'url(' . \Agl::getSkinUrl(''), $minifiedContent);
+            $minifiedContent = str_replace(
+                array(
+                    'url(../../',
+                    'url(../'
+                ), array(
+                    'url('  . \Agl::getSkinUrl($view::APP_HTTP_CSS_DIR),
+                    'url('  . \Agl::getSkinUrl('')
+                ), $minifiedContent);
+
             $minifiedContent = $compressor->run($minifiedContent);
             file_put_contents($this->_getAbsoluteCssFile($fileName), $minifiedContent);
         }
@@ -172,7 +180,7 @@ class Minify
         $view->loadJs();
         $jsFiles  = $view->jsToArray();
         $jsTags   = array();
-        $fileName = md5(implode($jsFiles));
+        $fileName = md5(\Agl::app()->getConfig('@app/global/theme') . implode($jsFiles));
 
         if (! is_readable($this->_getAbsoluteJsFile($fileName))) {
             \Agl::loadModuleLib(__DIR__, self::JS_LIB);
