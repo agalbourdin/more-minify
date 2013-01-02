@@ -34,7 +34,7 @@ class Minify
     {
         $dir = $this->_getAbsoluteMinifyDir();
         if (! is_writable($dir)) {
-            throw new \Agl\Exception("The minify directory '$dir' is not writable");
+            throw new \Exception("The minify directory '$dir' is not writable");
         }
     }
 
