@@ -1,6 +1,9 @@
 <?php
 namespace Agl\More\Minify;
 
+use \Agl,
+    \Agl\Core\Mvc\View\ViewInterface;
+
 /**
  * Observer for Minify module.
  *
@@ -20,16 +23,16 @@ class Observer
      */
     public static function minify(array $pObserver)
     {
-        if (! \Agl::app()->isCacheEnabled()) {
+        if (! Agl::app()->isCacheEnabled()) {
             return false;
         }
 
         $view = $pObserver['view'];
-        if ($view->getType() != \Agl\Core\Mvc\View\ViewInterface::TYPE_HTML) {
+        if ($view->getType() != ViewInterface::TYPE_HTML) {
             return false;
         }
 
-        $minify              = \Agl::getSingleton(\Agl::AGL_MORE_DIR . '/minify/minify');
+        $minify              = Agl::getSingleton(Agl::AGL_MORE_DIR . '/minify/minify');
 
         $cssTags             = $minify->getCssCache($view);
         $pObserver['buffer'] = str_replace($view->getCssMarker(), $cssTags . "\n", $pObserver['buffer']);

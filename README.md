@@ -3,8 +3,26 @@ More/Minify
 
 Additional Minify module for AGL.
 
-## Installation, Configuration & Usage
+## Installation
 
-[**www.agl.io/more/minify**](http://www.agl.io/more/minify)
+Add the following package to the `require` section of your application's `composer.json` file:
 
-> External libraries used by this module: [YUI-CSS-compressor-PHP-port](https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port), [jsmin-php](https://github.com/rgrove/jsmin-php)
+	"agl/more-minify": "*"
+
+## Configuration
+
+Create a folder `public/minify/` with write permissions.
+
+Add the following event to your `app/etc/config/core/events.json` file:
+
+	"agl_view_render_buffer_before": {
+		"more/minify/observer": [
+			"minify"
+		]
+	}
+
+And set `AGL_CACHE_ENABLED` to `true` in your `app/php/run.php` file.
+
+All your CSS and JS files will automatically be minified and concatenated.
+
+Minified files are stored in `public/minify/`. Delete files in this folder to regenerate the cache.

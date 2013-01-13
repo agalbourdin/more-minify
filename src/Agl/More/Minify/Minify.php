@@ -1,6 +1,15 @@
 <?php
 namespace Agl\More\Minify;
 
+use \Agl\Core\Agl,
+    \Agl\Core\Mvc\View\View,
+    \Agl\Core\Mvc\View\ViewInterface,
+    \Agl\Core\Mvc\View\Type\Html as HtmlView,
+    \Agl\Core\Url\Url,
+    \CssMinifier as CssMin,
+    \Exception,
+    \JsMin\Minify as JsMin;
+
 /**
  * Minify CSS and JS files.
  *
@@ -11,16 +20,6 @@ namespace Agl\More\Minify;
 
 class Minify
 {
-    /**
-     * JS lib filename.
-     */
-    const JS_LIB = 'jsmin.php';
-
-    /**
-     * CSS lib filename.
-     */
-    const CSS_LIB = 'cssmin.php';
-
     /**
      * The minify directory in the app public pool.
      */
@@ -34,7 +33,7 @@ class Minify
     {
         $dir = $this->_getAbsoluteMinifyDir();
         if (! is_writable($dir)) {
-            throw new \Exception("The minify directory '$dir' is not writable");
+            throw new Exception("The minify directory '$dir' is not writable");
         }
     }
 
@@ -45,8 +44,8 @@ class Minify
      */
     private function _getAbsoluteMinifyDir()
     {
-        return \Agl::app()->getPath()
-               . \Agl::APP_PUBLIC_DIR
+        return Agl::app()->getPath()
+               . Agl::APP_PUBLIC_DIR
                . DS
                . self::MINIFY_DIR
                . DS;
@@ -60,12 +59,12 @@ class Minify
     private function _getRelativeCssFile($pFile)
     {
         return ROOT
-               . \Agl::APP_PUBLIC_DIR
+               . Agl::APP_PUBLIC_DIR
                . DS
                . self::MINIFY_DIR
                . DS
                . $pFile
-               . \Agl\Core\Mvc\View\Type\Html::CSS_EXT;
+               . HtmlView::CSS_EXT;
     }
 
     /**
@@ -77,7 +76,7 @@ class Minify
     {
         return $this->_getAbsoluteMinifyDir()
                . $pFile
-               . \Agl\Core\Mvc\View\Type\Html::CSS_EXT;
+               . HtmlView::CSS_EXT;
     }
 
     /**
@@ -88,12 +87,12 @@ class Minify
     private function _getRelativeJsFile($pFile)
     {
         return ROOT
-               . \Agl::APP_PUBLIC_DIR
+               . Agl::APP_PUBLIC_DIR
                . DS
                . self::MINIFY_DIR
                . DS
                . $pFile
-               . \Agl\Core\Mvc\View\Type\Html::JS_EXT;
+               . HtmlView::JS_EXT;
     }
 
     /**
@@ -105,7 +104,7 @@ class Minify
     {
         return $this->_getAbsoluteMinifyDir()
                . $pFile
-               . \Agl\Core\Mvc\View\Type\Html::JS_EXT;
+               . HtmlView::JS_EXT;
     }
 
     /**
@@ -114,27 +113,26 @@ class Minify
      * @param View $view
      * @return string
      */
-    public function getCssCache(\Agl\Core\Mvc\View\View $view)
+    public function getCssCache(View $view)
     {
         $view->loadCss();
         $cssFiles = $view->cssToArray();
         $cssTags  = array();
-        $fileName = md5(\Agl::app()->getConfig('@app/global/theme') . implode($cssFiles));
+        $fileName = md5(Agl::app()->getConfig('@app/global/theme') . implode($cssFiles));
 
         if (! is_readable($this->_getAbsoluteCssFile($fileName))) {
-            \Agl::loadModuleLib(__DIR__, self::CSS_LIB);
-            $compressor      = new \CSSmin();
+            $compressor      = new CssMin();
             $minifiedContent = '';
 
             foreach($cssFiles as $css) {
-                if (! filter_var($css, FILTER_VALIDATE_URL, FILTER_FLAG_PATH_REQUIRED) and ! preg_match('/^\/\//', $css) and strpos($css, \Agl\Core\Mvc\View\Type\Html::LESSCSS_EXT) === false) {
+                if (! filter_var($css, FILTER_VALIDATE_URL, FILTER_FLAG_PATH_REQUIRED) and ! preg_match('/^\/\//', $css) and strpos($css, HtmlView::LESSCSS_EXT) === false) {
                     $minifiedContent .= "\n" . file_get_contents(
-                        \Agl::app()->getPath()
-                        . \Agl::APP_PUBLIC_DIR
+                        Agl::app()->getPath()
+                        . Agl::APP_PUBLIC_DIR
                         . DS
-                        . \Agl\Core\Mvc\View\ViewInterface::APP_HTTP_SKIN_DIR
+                        . ViewInterface::APP_HTTP_SKIN_DIR
                         . DS
-                        . \Agl::app()->getConfig('@app/global/theme')
+                        . Agl::app()->getConfig('@app/global/theme')
                         . DS
                         . $view::APP_HTTP_CSS_DIR
                         . DS
@@ -148,11 +146,11 @@ class Minify
                     'url(../../',
                     'url(../'
                 ), array(
-                    'url('  . \Agl::getSkinUrl($view::APP_HTTP_CSS_DIR),
-                    'url('  . \Agl::getSkinUrl('')
+                    'url('  . Url::getSkin($view::APP_HTTP_CSS_DIR),
+                    'url('  . Url::getSkin('')
                 ), $minifiedContent);
 
-            $minifiedContent = $compressor->run($minifiedContent);
+            $minifiedContent = $compressor->minify($minifiedContent);
             file_put_contents($this->_getAbsoluteCssFile($fileName), $minifiedContent);
         }
 
@@ -175,26 +173,25 @@ class Minify
      * @param View $view
      * @return string
      */
-    public function getJsCache(\Agl\Core\Mvc\View\View $view)
+    public function getJsCache(View $view)
     {
         $view->loadJs();
         $jsFiles  = $view->jsToArray();
         $jsTags   = array();
-        $fileName = md5(\Agl::app()->getConfig('@app/global/theme') . implode($jsFiles));
+        $fileName = md5(Agl::app()->getConfig('@app/global/theme') . implode($jsFiles));
 
         if (! is_readable($this->_getAbsoluteJsFile($fileName))) {
-            \Agl::loadModuleLib(__DIR__, self::JS_LIB);
             $minifiedContent = '';
 
             foreach($jsFiles as $js) {
                 if (! filter_var($js, FILTER_VALIDATE_URL, FILTER_FLAG_PATH_REQUIRED) and ! preg_match('/^\/\//', $js)) {
                     $minifiedContent .= "\n" . file_get_contents(
-                        \Agl::app()->getPath()
-                        . \Agl::APP_PUBLIC_DIR
+                        Agl::app()->getPath()
+                        . Agl::APP_PUBLIC_DIR
                         . DS
-                        . \Agl\Core\Mvc\View\ViewInterface::APP_HTTP_SKIN_DIR
+                        . ViewInterface::APP_HTTP_SKIN_DIR
                         . DS
-                        . \Agl::app()->getConfig('@app/global/theme')
+                        . Agl::app()->getConfig('@app/global/theme')
                         . DS
                         . $view::APP_HTTP_JS_DIR
                         . DS
@@ -203,7 +200,7 @@ class Minify
                 }
             }
 
-            $minifiedContent = \JsMin::minify($minifiedContent);
+            $minifiedContent = JsMin::minify($minifiedContent);
             file_put_contents($this->_getAbsoluteJsFile($fileName), $minifiedContent);
         }
 

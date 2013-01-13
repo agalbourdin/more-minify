@@ -1,15 +1,23 @@
 {
-    "name"       : "agl/more-minify",
-    "type"       : "agl-module",
-    "description": "Additional Minify module for AGL.",
-    "keywords"   : [ "agl", "minify", "jsmin", "cssmin" ],
-    "homepage"   : "http://www.agl.io/",
-    "license"    : "MIT",
+    "name": "agl/more-minify",
+    "description": "AGL Framework / Minify package.",
+    "keywords": [ "agl", "minify", "jsmin", "cssmin" ],
+    "homepage": "http://www.agl.io/",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Alexis Galbourdin",
+            "email": "ask@agl.io"
+        }
+    ],
     "require": {
-        "php"                : ">=5.3.0",
-        "composer/installers": "*"
+        "php": ">=5.3.0",
+        "natxet/CssMin": "*",
+        "nick4fake/jsmin": "*"
     },
-    "extra": {
-        "installer-name": "Minify"
+    "autoload": {
+        "psr-0": {
+            "Agl\\More\\Minify": "src/"
+        }
     }
 }
