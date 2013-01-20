@@ -44,7 +44,7 @@ class Minify
      */
     private function _getAbsoluteMinifyDir()
     {
-        return Agl::app()->getPath()
+        return APP_PATH
                . Agl::APP_PUBLIC_DIR
                . DS
                . self::MINIFY_DIR
@@ -127,7 +127,7 @@ class Minify
             foreach($cssFiles as $css) {
                 if (! filter_var($css, FILTER_VALIDATE_URL, FILTER_FLAG_PATH_REQUIRED) and ! preg_match('/^\/\//', $css) and strpos($css, HtmlView::LESSCSS_EXT) === false) {
                     $minifiedContent .= "\n" . file_get_contents(
-                        Agl::app()->getPath()
+                        APP_PATH
                         . Agl::APP_PUBLIC_DIR
                         . DS
                         . ViewInterface::APP_HTTP_SKIN_DIR
@@ -186,7 +186,7 @@ class Minify
             foreach($jsFiles as $js) {
                 if (! filter_var($js, FILTER_VALIDATE_URL, FILTER_FLAG_PATH_REQUIRED) and ! preg_match('/^\/\//', $js)) {
                     $minifiedContent .= "\n" . file_get_contents(
-                        Agl::app()->getPath()
+                        APP_PATH
                         . Agl::APP_PUBLIC_DIR
                         . DS
                         . ViewInterface::APP_HTTP_SKIN_DIR
