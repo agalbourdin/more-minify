@@ -6,7 +6,7 @@ use \Agl\Core\Agl,
     \Agl\Core\Mvc\View\ViewInterface,
     \Agl\Core\Mvc\View\Type\Html as HtmlView,
     \Agl\Core\Url\Url,
-    \CssMinifier as CssMin,
+    \CssMin,
     \Exception,
     \JsMin\Minify as JsMin;
 

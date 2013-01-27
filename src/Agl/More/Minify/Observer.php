@@ -32,7 +32,7 @@ class Observer
             return false;
         }
 
-        $minify              = Agl::getSingleton(Agl::AGL_MORE_DIR . '/minify/minify');
+        $minify              = Agl::getSingleton(Agl::AGL_MORE_POOL . '/minify/minify');
 
         $cssTags             = $minify->getCssCache($view);
         $pObserver['buffer'] = str_replace($view->getCssMarker(), $cssTags . "\n", $pObserver['buffer']);
