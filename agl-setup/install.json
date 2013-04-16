@@ -1,0 +1,6 @@
+{
+	"config/events.json": {
+		"dir": "app/etc/config/more/minify/",
+		"file": "events.json"
+	}
+}

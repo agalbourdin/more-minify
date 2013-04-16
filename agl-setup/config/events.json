@@ -1,0 +1,7 @@
+{
+	"agl_view_render_buffer_before": {
+		"more/minify/observer": [
+			"minify"
+		]
+	}
+}
