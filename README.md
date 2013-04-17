@@ -9,19 +9,17 @@ Add the following package to the `require` section of your application's `compos
 
 	"agl/more-minify": "*"
 
+Then run the following command:
+
+	php composer.phar update
+
 ## Configuration
 
-Create a folder `public/minify/` with write permissions.
+Create the following folder with write permissions: `public/minify/`
 
-Add the following event to your `app/etc/config/core/events.json` file:
+Enable AGL Cache by editing `app/php/run.php`:
 
-	"agl_view_render_buffer_before": {
-		"more/minify/observer": [
-			"minify"
-		]
-	}
-
-And set `AGL_CACHE_ENABLED` to `true` in your `app/php/run.php` file.
+	define('AGL_CACHE_ENABLED', true);
 
 All your CSS and JS files will automatically be minified and concatenated.
 
