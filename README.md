@@ -1,21 +1,17 @@
-More/Minify
-===========
+AGL Framework - More/Minify
+===========================
 
-Additional Minify module for AGL.
+Additional Minify module for [AGL Framework](https://github.com/agl-php/agl-app).
 
 ## Installation
 
-Add the following package to the `require` section of your application's `composer.json` file:
+Run the following command in the root of your AGL application:
 
-	"agl/more-minify": "*"
-
-Then run the following command:
-
-	php composer.phar update
+	php composer.phar require agl/more-minify:*
 
 ## Configuration
 
-Create the following folder with write permissions: `public/minify/`
+Create the following directory with write permissions: `public/minify/`.
 
 Enable AGL Cache by editing `app/php/run.php`:
 
@@ -23,4 +19,4 @@ Enable AGL Cache by editing `app/php/run.php`:
 
 All your CSS and JS files will automatically be minified and concatenated.
 
-Minified files are stored in `public/minify/`. Delete files in this folder to regenerate the cache.
+Minified files are stored in `public/minify/`. Delete files in this directory to regenerate the cache.
