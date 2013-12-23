@@ -19,5 +19,7 @@
         "psr-0": {
             "Agl\\More\\Minify": "src/"
         }
-    }
+    },
+
+    "minimum-stability": "dev"
 }
