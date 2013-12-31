@@ -8,7 +8,7 @@ use \Agl\Core\Agl,
     \Agl\Core\Url\Url,
     \CssMin,
     \Exception,
-    \JsMin\Minify as JsMin;
+    \JSMinPlus;
 
 /**
  * Minify CSS and JS files.
@@ -31,7 +31,7 @@ class Minify
      */
     public function __construct()
     {
-        $dir = $this->_getAbsoluteMinifyDir();
+        $dir = self::_getAbsoluteMinifyDir();
         if (! is_writable($dir)) {
             throw new Exception("The minify directory '$dir' is not writable");
         }
@@ -42,7 +42,7 @@ class Minify
      *
      * @return tring
      */
-    private function _getAbsoluteMinifyDir()
+    private static function _getAbsoluteMinifyDir()
     {
         return APP_PATH
                . Agl::APP_PUBLIC_DIR
@@ -52,11 +52,13 @@ class Minify
     }
 
     /**
-     * Return the relative path to the minified CSS file.
+     * Return the relative path to the minified CSS/JS file.
      *
-     * @return tring
+     * @param string $pFile Filename, without extension
+     * @param string $pExt File extension
+     * @return tsring
      */
-    private function _getRelativeCssFile($pFile)
+    private static function _getRelativeFile($pFile, $pExt)
     {
         return ROOT
                . Agl::APP_PUBLIC_DIR
@@ -64,51 +66,44 @@ class Minify
                . self::MINIFY_DIR
                . DS
                . $pFile
-               . HtmlView::CSS_EXT;
+               . $pExt;
     }
 
     /**
-     * Return the absolute path to the minified CSS file.
+     * Return the absolute path to the minified CSS/JS file.
      *
-     * @return tring
+     * @param string $pFile Filename, without extension
+     * @param string $pExt File extension
+     * @return string
      */
-    private function _getAbsoluteCssFile($pFile)
+    private static function _getAbsoluteFile($pFile, $pExt)
     {
-        return $this->_getAbsoluteMinifyDir()
+        return self::_getAbsoluteMinifyDir()
                . $pFile
-               . HtmlView::CSS_EXT;
+               . $pExt;
     }
 
     /**
-     * Return the relative path to the minified JS file.
+     * Return the absolute path of CSS or JS file in the "skin" directory.
      *
-     * @return tring
+     * @param string $pFile Filename, with extension
+     * @param string $pSubDir Skin subdirectory
      */
-    private function _getRelativeJsFile($pFile)
+    private static function _getAbsoluteSkinPath($pFile, $pSubDir)
     {
-        return ROOT
+        return APP_PATH
                . Agl::APP_PUBLIC_DIR
                . DS
-               . self::MINIFY_DIR
+               . ViewInterface::APP_HTTP_SKIN_DIR
                . DS
-               . $pFile
-               . HtmlView::JS_EXT;
+               . $pSubDir
+               . DS
+               . $pFile;
     }
 
     /**
-     * Return the absolute path to the minified JS file.
-     *
-     * @return tring
-     */
-    private function _getAbsoluteJsFile($pFile)
-    {
-        return $this->_getAbsoluteMinifyDir()
-               . $pFile
-               . HtmlView::JS_EXT;
-    }
-
-    /**
-     * Minify the CSS files if minified file not exists and create HTML tags.
+     * Minify the CSS files if minified file not exists (or if source files was
+     * modified) and create HTML tags.
      *
      * @param View $view
      * @return string
@@ -116,42 +111,49 @@ class Minify
     public function getCssCache(View $view)
     {
         $view->loadCss();
-        $cssFiles = $view->cssToArray();
-        $cssTags  = array();
-        $fileName = md5(Agl::app()->getConfig('@app/global/theme') . implode($cssFiles));
 
-        if (! is_readable($this->_getAbsoluteCssFile($fileName))) {
-            $compressor      = new CssMin();
-            $minifiedContent = '';
+        $cssFiles      = $view->cssToArray();
+        $cssTags       = array();
+        $fileName      = md5(implode($cssFiles));
+        $cacheFilePath = self::_getAbsoluteFile($fileName, HtmlView::CSS_EXT);
+        $forceReload   = false;
+
+        if (is_readable($cacheFilePath)) {
+            $cacheFileUpdatedAt = filemtime($cacheFilePath);
+
+            foreach ($cssFiles as $cssFile) {
+                $cssFilePath = self::_getAbsoluteSkinPath($cssFile, $view::APP_HTTP_CSS_DIR);
+                if (is_readable($cssFilePath) and filemtime($cssFilePath) > $cacheFileUpdatedAt) {
+                    $forceReload = true;
+                    break;
+                }
+            }
+        } else {
+            $forceReload = true;
+        }
+
+        if ($forceReload) {
+            $compressor = new CssMin();
+            $content    = '';
 
             foreach($cssFiles as $css) {
                 if (! filter_var($css, FILTER_VALIDATE_URL, FILTER_FLAG_PATH_REQUIRED) and ! preg_match('/^\/\//', $css) and strpos($css, HtmlView::LESSCSS_EXT) === false) {
-                    $minifiedContent .= "\n" . file_get_contents(
-                        APP_PATH
-                        . Agl::APP_PUBLIC_DIR
-                        . DS
-                        . ViewInterface::APP_HTTP_SKIN_DIR
-                        . DS
-                        . Agl::app()->getConfig('@app/global/theme')
-                        . DS
-                        . $view::APP_HTTP_CSS_DIR
-                        . DS
-                        . $css
-                    ) . "\n";
+                    $content .= "\n" . file_get_contents(self::_getAbsoluteSkinPath($css, $view::APP_HTTP_CSS_DIR)) . "\n";
                 }
             }
 
-            $minifiedContent = str_replace(
+            $content = str_replace(
                 array(
                     'url(../../',
                     'url(../'
                 ), array(
                     'url('  . Url::getSkin($view::APP_HTTP_CSS_DIR),
                     'url('  . Url::getSkin('')
-                ), $minifiedContent);
+                ), $content);
 
-            $minifiedContent = $compressor->minify($minifiedContent);
-            file_put_contents($this->_getAbsoluteCssFile($fileName), $minifiedContent);
+            $minifiedContent = $compressor->minify($content);
+
+            file_put_contents($cacheFilePath, $minifiedContent);
         }
 
         foreach($cssFiles as $css) {
@@ -162,7 +164,7 @@ class Minify
             }
         }
 
-        $cssTags[] = '<link href="' . $this->_getRelativeCssFile($fileName) . '" rel="stylesheet" type="text/css">';
+        $cssTags[] = '<link href="' . self::_getRelativeFile($fileName, HtmlView::CSS_EXT) . '" rel="stylesheet" type="text/css">';
 
         return implode("\n", $cssTags);
     }
@@ -176,32 +178,38 @@ class Minify
     public function getJsCache(View $view)
     {
         $view->loadJs();
-        $jsFiles  = $view->jsToArray();
-        $jsTags   = array();
-        $fileName = md5(Agl::app()->getConfig('@app/global/theme') . implode($jsFiles));
 
-        if (! is_readable($this->_getAbsoluteJsFile($fileName))) {
-            $minifiedContent = '';
+        $jsFiles       = $view->jsToArray();
+        $jsTags        = array();
+        $fileName      = md5(implode($jsFiles));
+        $cacheFilePath = self::_getAbsoluteFile($fileName, HtmlView::JS_EXT);
+        $forceReload   = false;
+
+        if (is_readable($cacheFilePath)) {
+            $cacheFileUpdatedAt = filemtime($cacheFilePath);
+
+            foreach ($jsFiles as $jsFile) {
+                $jsFilePath = self::_getAbsoluteSkinPath($jsFile, $view::APP_HTTP_JS_DIR);
+                if (is_readable($jsFilePath) and filemtime($jsFilePath) > $cacheFileUpdatedAt) {
+                    $forceReload = true;
+                    break;
+                }
+            }
+        } else {
+            $forceReload = true;
+        }
+
+        if ($forceReload) {
+            $content = '';
 
             foreach($jsFiles as $js) {
                 if (! filter_var($js, FILTER_VALIDATE_URL, FILTER_FLAG_PATH_REQUIRED) and ! preg_match('/^\/\//', $js)) {
-                    $minifiedContent .= "\n" . file_get_contents(
-                        APP_PATH
-                        . Agl::APP_PUBLIC_DIR
-                        . DS
-                        . ViewInterface::APP_HTTP_SKIN_DIR
-                        . DS
-                        . Agl::app()->getConfig('@app/global/theme')
-                        . DS
-                        . $view::APP_HTTP_JS_DIR
-                        . DS
-                        . $js
-                    ) . "\n";
+                    $content .= "\n" . file_get_contents(self::_getAbsoluteSkinPath($js, $view::APP_HTTP_JS_DIR)) . "\n";
                 }
             }
 
-            $minifiedContent = JsMin::minify($minifiedContent);
-            file_put_contents($this->_getAbsoluteJsFile($fileName), $minifiedContent);
+            $minifiedContent = JSMinPlus::minify($content);
+            file_put_contents($cacheFilePath, $minifiedContent);
         }
 
         foreach($jsFiles as $js) {
@@ -210,7 +218,7 @@ class Minify
             }
         }
 
-        $jsTags[] = '<script src="' . $this->_getRelativeJsFile($fileName) . '" type="text/javascript"></script>';
+        $jsTags[] = '<script src="' . self::_getRelativeFile($fileName, HtmlView::JS_EXT) . '" type="text/javascript"></script>';
 
         return implode("\n", $jsTags);
     }
