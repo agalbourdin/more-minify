@@ -137,7 +137,7 @@ class Minify
             $content    = '';
 
             foreach($cssFiles as $css) {
-                if (! filter_var($css, FILTER_VALIDATE_URL, FILTER_FLAG_PATH_REQUIRED) and ! preg_match('/^\/\//', $css) and strpos($css, HtmlView::LESSCSS_EXT) === false) {
+                if (! filter_var($css, FILTER_VALIDATE_URL, FILTER_FLAG_PATH_REQUIRED) and ! preg_match('/^\/\//', $css)) {
                     $content .= "\n" . file_get_contents(self::_getAbsoluteSkinPath($css, $view::APP_HTTP_CSS_DIR)) . "\n";
                 }
             }
@@ -159,8 +159,6 @@ class Minify
         foreach($cssFiles as $css) {
             if (filter_var($css, FILTER_VALIDATE_URL, FILTER_FLAG_PATH_REQUIRED) or preg_match('/^\/\//', $css)) {
                 $cssTags[] = '<link href="' . $css . '" rel="stylesheet" type="text/css">';
-            } else if (strpos($css, \Agl\Core\Mvc\View\Type\Html::LESSCSS_EXT) !== false) {
-                $cssTags[] = '<link href="' . $css . '" rel="stylesheet/less" type="text/css">';
             }
         }
 
