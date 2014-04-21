@@ -15,8 +15,8 @@
         "nitra/php-min": "*"
     },
     "autoload": {
-        "psr-0": {
-            "Agl\\More\\Minify": "src/"
+        "psr-4": {
+            "Agl\\More\\Minify\\": "src/"
         }
     },
 
