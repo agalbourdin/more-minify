@@ -26,6 +26,16 @@ class Minify
     const MINIFY_DIR = 'minify';
 
     /**
+     * CSS file extension.
+     */
+    const CSS_EXT  = '.css';
+
+    /**
+     * JS file extension.
+     */
+    const JS_EXT  = '.js';
+
+    /**
      * The Minify constructor.
      * Chck if the Minify dir exists and is writable (required).
      */
@@ -110,12 +120,10 @@ class Minify
      */
     public function getCssCache(View $view)
     {
-        $view->loadCss();
-
         $cssFiles      = $view->cssToArray();
         $cssTags       = array();
         $fileName      = md5(implode($cssFiles));
-        $cacheFilePath = self::_getAbsoluteFile($fileName, HtmlView::CSS_EXT);
+        $cacheFilePath = self::_getAbsoluteFile($fileName, self::CSS_EXT);
         $forceReload   = false;
 
         if (is_readable($cacheFilePath)) {
@@ -162,7 +170,7 @@ class Minify
             }
         }
 
-        $cssTags[] = '<link href="' . self::_getRelativeFile($fileName, HtmlView::CSS_EXT) . '" rel="stylesheet" type="text/css">';
+        $cssTags[] = '<link href="' . self::_getRelativeFile($fileName, self::CSS_EXT) . '" rel="stylesheet" type="text/css">';
 
         return implode("\n", $cssTags);
     }
@@ -171,16 +179,16 @@ class Minify
      * Minify the JS files if minified file not exists and create HTML tags.
      *
      * @param View $view
+     * @param bool $pFooter Generate header or footer section
      * @return string
      */
-    public function getJsCache(View $view)
+    public function getJsCache(View $view, $pFooter = false)
     {
-        $view->loadJs();
-
-        $jsFiles       = $view->jsToArray();
+        $allJsFiles    = $view->jsToArray();
+        $jsFiles       = ($pFooter) ? $allJsFiles[HtmlView::JS_MARKER_FOOTER] : $allJsFiles[HtmlView::JS_MARKER_HEADER];
         $jsTags        = array();
         $fileName      = md5(implode($jsFiles));
-        $cacheFilePath = self::_getAbsoluteFile($fileName, HtmlView::JS_EXT);
+        $cacheFilePath = self::_getAbsoluteFile($fileName, self::JS_EXT);
         $forceReload   = false;
 
         if (is_readable($cacheFilePath)) {
@@ -216,7 +224,7 @@ class Minify
             }
         }
 
-        $jsTags[] = '<script src="' . self::_getRelativeFile($fileName, HtmlView::JS_EXT) . '" type="text/javascript"></script>';
+        $jsTags[] = '<script src="' . self::_getRelativeFile($fileName, self::JS_EXT) . '" type="text/javascript"></script>';
 
         return implode("\n", $jsTags);
     }

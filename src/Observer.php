@@ -23,7 +23,7 @@ class Observer
      */
     public static function minify(array $pObserver)
     {
-        if (! Agl::app()->isCacheEnabled()) {
+        if (! Agl::app()->getConfig('more-minify-main/enabled')) {
             return false;
         }
 
@@ -39,6 +39,9 @@ class Observer
 
         $jsTags              = $minify->getJsCache($view);
         $pObserver['buffer'] = str_replace($view->getJsMarker(), $jsTags . "\n", $pObserver['buffer']);
+
+        $jsTags              = $minify->getJsCache($view, true);
+        $pObserver['buffer'] = str_replace($view->getJsMarker(true), $jsTags . "\n", $pObserver['buffer']);
 
         return true;
     }
